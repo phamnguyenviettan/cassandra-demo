@@ -1,0 +1,122 @@
+services:
+  cassandra:
+    image: cassandra:latest
+    container_name: cassandra-vector
+    ports:
+      - "9042:9042" # Cassandra Node 1
+      - "7070:7070" # JMX Node 1
+    environment:
+      - CASSANDRA_CLUSTER_NAME=VectorCluster
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - CASSANDRA_DC=datacenter1
+      - MAX_HEAP_SIZE=768M
+      - HEAP_NEWSIZE=150M
+      - JVM_OPTS=-javaagent:/tmp/jmx_prometheus_javaagent.jar=7070:/tmp/jmx_exporter_config.yml
+    deploy:
+      resources:
+        limits:
+          memory: 1536M
+        reservations:
+          memory: 768M
+    volumes:
+      - cassandra_data:/var/lib/cassandra
+      - ./jmx_exporter_config.yml:/tmp/jmx_exporter_config.yml
+      - ./jmx_prometheus_javaagent.jar:/tmp/jmx_prometheus_javaagent.jar
+    healthcheck:
+      test: ["CMD", "cqlsh", "-e", "describe keyspaces"]
+      interval: 10s
+      timeout: 10s
+      retries: 15
+
+  cassandra-2:
+    image: cassandra:latest
+    container_name: cassandra-vector-2
+    ports:
+      - "9043:9042" # Cassandra Node 2 (Host port 9043)
+      - "7071:7070" # JMX Node 2 (Host port 7071)
+    environment:
+      - CASSANDRA_CLUSTER_NAME=VectorCluster
+      - CASSANDRA_SEEDS=cassandra-vector
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - CASSANDRA_DC=datacenter1
+      - MAX_HEAP_SIZE=768M
+      - HEAP_NEWSIZE=150M
+      - JVM_OPTS=-javaagent:/tmp/jmx_prometheus_javaagent.jar=7070:/tmp/jmx_exporter_config.yml
+    deploy:
+      resources:
+        limits:
+          memory: 1536M
+        reservations:
+          memory: 768M
+    volumes:
+      - cassandra_data_2:/var/lib/cassandra
+      - ./jmx_exporter_config.yml:/tmp/jmx_exporter_config.yml
+      - ./jmx_prometheus_javaagent.jar:/tmp/jmx_prometheus_javaagent.jar
+    depends_on:
+      cassandra:
+        condition: service_healthy
+
+  cassandra-3:
+    image: cassandra:latest
+    container_name: cassandra-vector-3
+    ports:
+      - "9044:9042" # Cassandra Node 3 (Host port 9044)
+      - "7072:7070" # JMX Node 3 (Host port 7072)
+    environment:
+      - CASSANDRA_CLUSTER_NAME=VectorCluster
+      - CASSANDRA_SEEDS=cassandra-vector
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - CASSANDRA_DC=datacenter1
+      - MAX_HEAP_SIZE=768M
+      - HEAP_NEWSIZE=150M
+      - JVM_OPTS=-javaagent:/tmp/jmx_prometheus_javaagent.jar=7070:/tmp/jmx_exporter_config.yml
+    deploy:
+      resources:
+        limits:
+          memory: 1536M
+        reservations:
+          memory: 768M
+    volumes:
+      - cassandra_data_3:/var/lib/cassandra
+      - ./jmx_exporter_config.yml:/tmp/jmx_exporter_config.yml
+      - ./jmx_prometheus_javaagent.jar:/tmp/jmx_prometheus_javaagent.jar
+    depends_on:
+      cassandra-2:
+        condition: service_started
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 128M
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 128M
+    depends_on:
+      - prometheus
+
+volumes:
+  cassandra_data:
+  cassandra_data_2:
+  cassandra_data_3:

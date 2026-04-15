@@ -1,0 +1,96 @@
+lowercaseOutputName: true
+lowercaseOutputLabelNames: true
+
+rules:
+  # Generic catch-all rule for all Cassandra MBeans
+  # This ensures all JMX metrics are exported
+  - pattern: 'org\.apache\.cassandra\.metrics<type=(\w+), scope=(\w+), name=(\w+)><>(\w+)'
+    name: cassandra_$1_$3_$4
+    labels:
+      scope: "$2"
+    type: UNTYPED
+
+  - pattern: 'org\.apache\.cassandra\.metrics<type=(\w+), name=(\w+)><>(\w+)'
+    name: cassandra_$1_$2_$3
+    type: UNTYPED
+
+  # Thread pools
+  - pattern: 'org\.apache\.cassandra\.metrics<type=ThreadPools, path=(\w+), scope=(\w+), name=(\w+)><>Value'
+    name: cassandra_threadpools_$3
+    labels:
+      path: "$1"
+      threadpools: "$2"
+    type: GAUGE
+
+  - pattern: 'org\.apache\.cassandra\.metrics<type=ThreadPools, path=(\w+), scope=(\w+), name=(\w+)><>Count'
+    name: cassandra_threadpools_$3_count
+    labels:
+      path: "$1"
+      threadpools: "$2"
+    type: COUNTER
+
+  # Client Request metrics
+  - pattern: 'org\.apache\.cassandra\.metrics<type=ClientRequest, scope=(\w+), name=(\w+)><>(\w+)'
+    name: cassandra_clientrequest_$2_$3
+    labels:
+      clientrequest: "$1"
+    type: UNTYPED
+
+  # Compaction
+  - pattern: 'org\.apache\.cassandra\.metrics<type=Compaction, name=(\w+)><>(\w+)'
+    name: cassandra_compaction_$1_$2
+    type: UNTYPED
+
+  # Storage
+  - pattern: 'org\.apache\.cassandra\.metrics<type=Storage, name=(\w+)><>(\w+)'
+    name: cassandra_storage_$1_$2
+    type: UNTYPED
+
+  # Connection
+  - pattern: 'org\.apache\.cassandra\.metrics<type=Connection, name=(\w+)><>(\w+)'
+    name: cassandra_connection_$1_$2
+    type: UNTYPED
+
+  # DroppedMessage
+  - pattern: 'org\.apache\.cassandra\.metrics<type=DroppedMessage, scope=(\w+), name=(\w+)><>(\w+)'
+    name: cassandra_droppedmessage_$2_$3
+    labels:
+      messagetype: "$1"
+    type: UNTYPED
+
+  # Table / ColumnFamily
+  - pattern: 'org\.apache\.cassandra\.metrics<type=Table, keyspace=(\w+), scope=(\w+), name=(\w+)><>(\w+)'
+    name: cassandra_table_$3_$4
+    labels:
+      keyspace: "$1"
+      table: "$2"
+    type: UNTYPED
+
+  - pattern: 'org\.apache\.cassandra\.metrics<type=Table, name=(\w+)><>(\w+)'
+    name: cassandra_table_$1_$2
+    type: UNTYPED
+
+  # Cache
+  - pattern: 'org\.apache\.cassandra\.metrics<type=Cache, scope=(\w+), name=(\w+)><>(\w+)'
+    name: cassandra_cache_$2_$3
+    labels:
+      cache: "$1"
+    type: UNTYPED
+
+  # Client
+  - pattern: 'org\.apache\.cassandra\.metrics<type=Client, name=(\w+)><>(\w+)'
+    name: cassandra_client_$1_$2
+    type: UNTYPED
+
+  # BufferPool
+  - pattern: 'org\.apache\.cassandra\.metrics<type=BufferPool, name=(\w+)><>(\w+)'
+    name: cassandra_bufferpool_$1_$2
+    type: UNTYPED
+
+  # FailureDetector
+  - pattern: 'org\.apache\.cassandra\.net<type=FailureDetector><>(\w+)'
+    name: cassandra_failuredetector_$1
+    type: GAUGE
+
+  # Catch-all for remaining Cassandra beans
+  - pattern: 'org\.apache\.cassandra.*'

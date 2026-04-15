@@ -1,0 +1,10 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'cassandra'
+    static_configs:
+      - targets: ['cassandra:7070', 'cassandra-2:7070', 'cassandra-3:7070']
+        labels:
+          cluster: 'VectorCluster'
+          datacenter: 'datacenter1'

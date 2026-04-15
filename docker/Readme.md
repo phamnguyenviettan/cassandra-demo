@@ -1,0 +1,1 @@
+http://prometheus:9090
